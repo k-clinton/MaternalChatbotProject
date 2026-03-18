@@ -4,11 +4,8 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import winston from 'winston';
 import expressWinston from 'express-winston';
-import dotenv from 'dotenv';
 
 import { router } from './routes';
-
-dotenv.config();
 
 const app: Application = express();
 

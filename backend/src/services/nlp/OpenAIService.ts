@@ -43,14 +43,14 @@ export class OpenAIService {
       });
 
       const replyText = response.choices[0].message?.content || "I'm sorry, I couldn't process that request.";
-      
+
       // Determine urgency based on keywords or secondary LLM call
       // For simplicity in this iteration, we use simple keyword matching combined with the LLM's instructed output
       const urgentKeywords = ['immediate medical attention', 'emergency', 'urgent', 'healthcare provider immediately', '911'];
       const isUrgent = urgentKeywords.some(keyword => replyText.toLowerCase().includes(keyword));
 
       return { text: replyText, isUrgent };
-      
+
     } catch (error) {
       console.error("OpenAI Service Error:", error);
       throw new Error("Failed to process message with AI.");
@@ -60,7 +60,7 @@ export class OpenAIService {
   private static mockProcessMessage(message: string): { text: string; isUrgent: boolean } {
     const textLower = message.toLowerCase();
     const isUrgent = textLower.includes('headache') || textLower.includes('bleeding') || textLower.includes('pain');
-    
+
     if (isUrgent) {
       return {
         text: "I noticed you mentioned some concerning symptoms. Please contact your healthcare provider immediately or go to the nearest emergency room.",

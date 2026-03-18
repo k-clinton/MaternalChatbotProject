@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Clock, AlertTriangle } from 'lucide-react';
+import axios from 'axios';
 import { cn } from '../../utils/tw';
 
 interface Message {
@@ -20,6 +21,7 @@ export default function ChatbotInterface() {
     }
   ]);
   const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -30,34 +32,55 @@ export default function ChatbotInterface() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
+  const handleSend = async () => {
+    if (!inputValue.trim() || isLoading) return;
 
+    const userText = inputValue;
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
-      text: inputValue,
+      text: userText,
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
+    setIsLoading(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const isUrgent = userMsg.text.toLowerCase().includes('headache') || userMsg.text.toLowerCase().includes('bleeding');
-      
+    try {
+      const history = messages.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      }));
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+      const response = await axios.post(`${baseUrl}/chat/message`, {
+        message: userText,
+        history
+      });
+
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: isUrgent 
-          ? "I noticed you mentioned some concerning symptoms. Please contact your healthcare provider immediately or go to the nearest emergency room."
-          : "I understand. I've logged that in your weekly health diary. Remember to stay hydrated and rest when you can.",
-        timestamp: new Date(),
-        isUrgent
+        text: response.data.reply || "I'm sorry, I couldn't process that request.",
+        timestamp: response.data.timestamp ? new Date(response.data.timestamp) : new Date(),
+        isUrgent: response.data.isUrgent
       };
+      
       setMessages(prev => [...prev, botMsg]);
-    }, 1000);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: 'bot',
+        text: "I'm having trouble connecting to the server. Please try again later.",
+        timestamp: new Date(),
+        isUrgent: false
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -138,10 +161,10 @@ export default function ChatbotInterface() {
           />
           <button 
             onClick={handleSend}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() || isLoading}
             className="bg-maternal-600 hover:bg-maternal-700 disabled:bg-maternal-300 disabled:cursor-not-allowed text-white rounded-2xl p-3.5 transition-all shadow-sm mb-0.5"
           >
-            <Send className="w-5 h-5" />
+            {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
           </button>
         </div>
         <p className="text-center text-xs text-maternal-400 mt-3 font-medium">
