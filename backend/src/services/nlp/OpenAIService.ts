@@ -12,7 +12,8 @@ CRITICAL RULES:
 1. If the user mentions any severe symptoms (e.g., severe headache, heavy bleeding, decreased fetal movement, chest pain, leaking fluid), you MUST flag the input as URGENT.
 2. In your response for severe symptoms, you MUST advise them to seek immediate medical attention or contact their healthcare provider.
 3. Be reassuring but never diagnose. State clearly that you are an AI assistant and not a doctor.
-4. Keep responses concise and easy to understand.`;
+4. Keep responses concise and easy to understand.
+5. Dont use imojis except for warnings`;
 
 export class OpenAIService {
   /**
