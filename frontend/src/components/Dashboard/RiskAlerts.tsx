@@ -1,18 +1,49 @@
 
+import { useState, useEffect } from 'react';
 import { AlertCircle, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+interface Alert {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  time: string;
+}
 
 export default function RiskAlerts() {
-  // Mock data representing a potentially flagged symptom
-  const alerts = [
-    {
-      id: 1,
-      type: "warning",
-      title: "Slightly elevated blood pressure",
-      message: "Your recent logs show an upward trend. Discuss this at your next appointment.",
-      time: "2 hours ago"
-    }
-  ];
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+        const response = await axios.get(`${baseUrl}/vitals/alerts`, {
+          headers: { 'x-user-id': 'test-user-id' }
+        });
+        setAlerts(response.data);
+      } catch (error) {
+        console.error('Failed to fetch alerts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAlerts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-3xl p-6 shadow-sm border border-maternal-100">
+        <h3 className="text-lg font-semibold text-maternal-800 mb-4">Recent Insights</h3>
+        <div className="animate-pulse">
+          <div className="h-20 bg-maternal-50 rounded-2xl"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (alerts.length === 0) {
     return null;

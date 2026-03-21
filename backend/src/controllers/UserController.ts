@@ -14,17 +14,17 @@ export class UserController {
       
       if (!user) {
         // Create a mock user if it doesn't exist to make the prototype work smoothly
-        user = UserController.userRepository.create({
-          id: userId,
-          name: 'Jane Doe',
-          email: 'jane@example.com',
-          weeksPregnant: 24
-        });
+        user = new User();
+        user.id = userId;
+        user.name = 'Jane Doe';
+        user.email = 'jane@example.com';
+        user.weeksPregnant = 24;
         await UserController.userRepository.save(user);
       }
       
       return res.status(200).json(user);
     } catch (error) {
+      console.error('UserController getProfile error:', error);
       return res.status(500).json({ error: 'Failed to fetch user profile' });
     }
   }
