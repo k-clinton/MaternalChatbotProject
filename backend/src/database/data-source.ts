@@ -1,16 +1,23 @@
 import 'reflect-metadata';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
+import { User } from '../models/User';
+import { VitalsLog } from '../models/VitalsLog';
+import { Appointment } from '../models/Appointment';
 
 dotenv.config();
 
 export const databaseConfig: DataSourceOptions = {
-  type: 'sqlite',
-  database: 'maternal_health.sqlite',
-  // Path adjustment: Since we run this from src or dist, use relative path or __dirname carefully
-  entities: [__dirname + '/../models/**/*.ts'], // Use .ts for development
-  synchronize: process.env.NODE_ENV !== 'production',
-  logging: false,
+  type: 'mysql',
+  host: process.env.DATABASE_HOST || 'localhost',
+  port: parseInt(process.env.DATABASE_PORT || '3307'),
+  username: process.env.DATABASE_USER || 'root',
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME || 'maternal_health',
+  entities: [User, VitalsLog, Appointment],
+  migrations: ['src/database/migrations/*.ts'], // Path to your migration files
+  synchronize: false, // Set to false when using migrations!
+  logging: true,
 };
 
 const dataSource = new DataSource(databaseConfig);
