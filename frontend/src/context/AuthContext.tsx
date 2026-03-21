@@ -5,6 +5,8 @@ interface User {
   name: string;
   email: string;
   weeksPregnant?: number;
+  dueDate?: string;
+  emergencyContact?: string;
   role: string;
 }
 
