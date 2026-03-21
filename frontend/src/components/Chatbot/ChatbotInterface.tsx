@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Clock, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { cn } from '../../utils/tw';
+import { useAuth } from '../../context/AuthContext';
 
 interface Message {
   id: string;
@@ -12,14 +13,22 @@ interface Message {
 }
 
 export default function ChatbotInterface() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'bot',
-      text: "Hello Jane! I'm your maternal care assistant. How are you feeling today? You can log symptoms, ask questions about your pregnancy, or check your upcoming milestones.",
-      timestamp: new Date()
+  const { user, token } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      setMessages([
+        {
+          id: '1',
+          sender: 'bot',
+          text: `Hello ${user.name.split(' ')[0]}! I'm your maternal care assistant. How are you feeling today? You can log symptoms, ask questions about your pregnancy, or check your upcoming milestones.`,
+          timestamp: new Date()
+        }
+      ]);
     }
-  ]);
+  }, [user]);
+
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -54,10 +63,17 @@ export default function ChatbotInterface() {
       }));
 
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
-      const response = await axios.post(`${baseUrl}/chat/message`, {
-        message: userText,
-        history
-      });
+      const response = await axios.post(`${baseUrl}/chat/message`, 
+        {
+          message: userText,
+          history
+        },
+        {
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          }
+        }
+      );
 
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),

@@ -18,14 +18,31 @@ CRITICAL RULES:
 export class OpenAIService {
   /**
    * Analyzes an incoming message using GPT-4 to provide a response and determine urgency.
+   * @param message The user's message
+   * @param history Conversation history
+   * @param userContext Optional string containing user profile and recent vitals
    */
   public static async processMessage(
     message: string,
-    history: { role: 'user' | 'assistant', content: string }[] = []
+    history: { role: 'user' | 'assistant', content: string }[] = [],
+    userContext: string = ''
   ): Promise<{ text: string; isUrgent: boolean }> {
     try {
+      const dynamicSystemPrompt = `You are a compassionate, professional, and highly knowledgeable Maternal Care Assistant chatbot.
+Your primary role is to answer questions related to pregnancy, monitor symptoms, and provide triage analysis.
+
+${userContext ? `CURRENT PATIENT DATA:\n${userContext}\n` : ''}
+
+CRITICAL RULES:
+1. If the user mentions any severe symptoms (e.g., severe headache, heavy bleeding, decreased fetal movement, chest pain, leaking fluid), you MUST flag the input as URGENT.
+2. In your response for severe symptoms, you MUST advise them to seek immediate medical attention or contact their healthcare provider.
+3. Be reassuring but never diagnose. State clearly that you are an AI assistant and not a doctor.
+4. Keep responses concise and easy to understand.
+5. Reference the patient's specific health data (like weeks pregnant or recent vitals) if relevant to provide personalized support.
+6. Dont use imojis except for warnings`;
+
       const messages: any[] = [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: dynamicSystemPrompt },
         ...history.map(msg => ({ role: msg.role, content: msg.content })),
         { role: 'user', content: message }
       ];
