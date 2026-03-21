@@ -1,10 +1,52 @@
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Baby, CalendarDays } from 'lucide-react';
+import axios from 'axios';
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  weeksPregnant: number;
+}
 
 export default function PregnancyTracker() {
-  const currentWeek = 24;
-  const daysRemaining = 112;
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+        const response = await axios.get(`${baseUrl}/users/profile`, {
+          headers: { 'x-user-id': 'test-user-id' }
+        });
+        setUser(response.data);
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  if (loading || !user) {
+    return (
+      <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-maternal-100 flex flex-col md:flex-row items-center gap-8">
+        <div className="w-40 h-40 bg-maternal-50 rounded-full animate-pulse"></div>
+        <div className="flex-1 space-y-4">
+          <div className="h-6 bg-maternal-50 rounded animate-pulse"></div>
+          <div className="h-4 bg-maternal-50 rounded animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentWeek = user.weeksPregnant || 24;
+  const daysRemaining = (40 - currentWeek) * 7;
   const progress = (currentWeek / 40) * 100;
   const circleCircumference = 2 * Math.PI * 45; // r=45
   const strokeDashoffset = circleCircumference - (progress / 100) * circleCircumference;
