@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Activity, HeartPulse, Scale } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 interface VitalsLogFormProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export default function VitalsLogForm({ isOpen, onClose, onLogSuccess }: VitalsL
   });
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState<{ isRisk: boolean; message: string } | null>(null);
+  const { token } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,9 @@ export default function VitalsLogForm({ isOpen, onClose, onLogSuccess }: VitalsL
         weight: formData.weight ? parseFloat(formData.weight) : null,
         fetalMovement: formData.fetalMovement ? parseInt(formData.fetalMovement) : null
       }, {
-        headers: { 'x-user-id': 'test-user-id' }
+        headers: { 
+          Authorization: `Bearer ${token}` 
+        }
       });
 
       if (response.data.alert) {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 interface Appointment {
   id: string;
@@ -12,13 +13,16 @@ interface Appointment {
 export default function AppointmentsWidget() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
         const response = await axios.get(`${baseUrl}/appointments`, {
-          headers: { 'x-user-id': 'test-user-id' }
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          }
         });
         setAppointments(response.data.slice(0, 3)); // Show only next 3
       } catch (error) {
@@ -28,8 +32,10 @@ export default function AppointmentsWidget() {
       }
     };
 
-    fetchAppointments();
-  }, []);
+    if (token) {
+      fetchAppointments();
+    }
+  }, [token]);
 
   if (loading) {
     return (

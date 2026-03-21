@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { AlertCircle, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 interface Alert {
   id: string;
@@ -15,13 +15,16 @@ interface Alert {
 export default function RiskAlerts() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
         const response = await axios.get(`${baseUrl}/vitals/alerts`, {
-          headers: { 'x-user-id': 'test-user-id' }
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          }
         });
         setAlerts(response.data);
       } catch (error) {
@@ -31,8 +34,10 @@ export default function RiskAlerts() {
       }
     };
 
-    fetchAlerts();
-  }, []);
+    if (token) {
+      fetchAlerts();
+    }
+  }, [token]);
 
   if (loading) {
     return (
