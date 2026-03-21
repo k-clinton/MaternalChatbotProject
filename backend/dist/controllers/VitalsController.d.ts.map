@@ -1,0 +1,1 @@
+{"version":3,"file":"VitalsController.d.ts","sourceRoot":"","sources":["../../src/controllers/VitalsController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAK5C,qBAAa,gBAAgB;IAC3B,OAAO,CAAC,MAAM,CAAC,gBAAgB,CAAuC;WAElD,SAAS,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;WAuBrC,OAAO,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ;CAexD"}

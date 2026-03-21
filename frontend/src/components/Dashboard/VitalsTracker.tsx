@@ -1,6 +1,25 @@
 
+import { useState, useEffect } from 'react';
 import { Activity, HeartPulse, Scale } from 'lucide-react';
+import axios from 'axios';
 import { cn } from '../../utils/tw';
+
+interface VitalsLog {
+  id: string;
+  bloodPressure: string | null;
+  weight: number | null;
+  fetalMovement: number | null;
+  loggedAt: string;
+}
+
+interface VitalsWidgetProps {
+  title: string;
+  value: string;
+  unit: string;
+  status: 'normal' | 'warning' | 'alert';
+  trend: string;
+  icon: React.ElementType;
+}
 
 interface VitalsWidgetProps {
   title: string;
@@ -55,30 +74,87 @@ function VitalsWidget({ title, value, unit, status, trend, icon: Icon }: VitalsW
 }
 
 export default function VitalsTracker() {
+  const [vitals, setVitals] = useState<VitalsLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVitals = async () => {
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+        const response = await axios.get(`${baseUrl}/vitals`, {
+          headers: { 'x-user-id': 'test-user-id' }
+        });
+        setVitals(response.data);
+      } catch (error) {
+        console.error('Failed to fetch vitals:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVitals();
+  }, []);
+
+  const getLatestValue = (field: keyof VitalsLog) => {
+    if (vitals.length === 0) return null;
+    const latest = vitals[0];
+    return latest[field];
+  };
+
+  const getStatus = (value: any, type: string) => {
+    if (!value) return 'normal';
+    
+    switch (type) {
+      case 'bloodPressure':
+        const parts = value.split('/');
+        if (parts.length === 2) {
+          const systolic = parseInt(parts[0], 10);
+          return systolic >= 140 ? 'alert' : systolic >= 130 ? 'warning' : 'normal';
+        }
+        return 'normal';
+      case 'fetalMovement':
+        return value < 3 ? 'alert' : value < 10 ? 'warning' : 'normal';
+      default:
+        return 'normal';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="p-5 rounded-2xl border bg-white border-maternal-100 animate-pulse">
+            <div className="h-20 bg-maternal-50 rounded"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <VitalsWidget 
         title="Blood Pressure" 
-        value="118/75" 
+        value={getLatestValue('bloodPressure')?.toString() || 'Not logged'} 
         unit="mmHg" 
-        status="normal" 
-        trend="Stable since last week" 
+        status={getStatus(getLatestValue('bloodPressure'), 'bloodPressure')} 
+        trend="Latest reading" 
         icon={HeartPulse} 
       />
       <VitalsWidget 
         title="Weight Logged" 
-        value="152" 
+        value={getLatestValue('weight')?.toString() || 'Not logged'} 
         unit="lbs" 
         status="normal" 
-        trend="+1.2 lbs this week" 
+        trend="Latest reading" 
         icon={Scale} 
       />
       <VitalsWidget 
         title="Fetal Movement" 
-        value="14" 
+        value={getLatestValue('fetalMovement')?.toString() || 'Not logged'} 
         unit="kicks/hr" 
-        status="normal" 
-        trend="Active in evening" 
+        status={getStatus(getLatestValue('fetalMovement'), 'fetalMovement')} 
+        trend="Latest reading" 
         icon={Activity} 
       />
     </div>

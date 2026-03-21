@@ -2,8 +2,6 @@
 
 A comprehensive full-stack application for maternal health monitoring, designed to assist expecting mothers with symptom triage, vitals tracking, and pregnancy guidance using conversational AI.
 
-![MaternalCare Dashboard Placeholder]() <!-- Add screenshots here -->
-
 ## 🌟 Features
 
 - **Conversational AI Assistant:** Triage symptoms, log health information, and get general pregnancy advice powered by OpenAI's GPT-4o model.
@@ -14,23 +12,21 @@ A comprehensive full-stack application for maternal health monitoring, designed 
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React 19, Vite, Tailwind CSS, TypeScript, React Router, Lucide React
-- **Backend:** Node.js, Express, TypeScript, TypeORM, Postgres, Zod (validation)
+- **Frontend:** React 19, Vite, Tailwind CSS, TypeScript, React Router, Lucide React, Axios
+- **Backend:** Node.js, Express, TypeScript, TypeORM, SQLite, OpenAI API
 - **AI Integration:** OpenAI API (GPT-4o)
-- **Authentication/Security:** JWT, bcryptjs, Helmet, Rate Limiting
+- **Security:** Helmet, Rate Limiting, CORS
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js (v18+)
-- PostgreSQL (or SQLite via TypeORM config interchangeably)
-- Redis server running locally (optional but recommended for rate limiting and caching)
-- An OpenAI API key or GitHub Marketplace Models Key.
+- OpenAI API key or GitHub Marketplace Models Key
 
 ### 1. Backend Setup
 
-1. Open a terminal and navigate to the `backend` folder:
+1. Navigate to the `backend` folder:
    ```bash
    cd backend
    ```
@@ -38,16 +34,82 @@ A comprehensive full-stack application for maternal health monitoring, designed 
    ```bash
    npm install
    ```
-3. Set up environment variables. Create a `.env` file in the `backend/` directory:
-   ```env
-   NODE_ENV=development
-   PORT=6000
-   API_PREFIX=/api/v1
-   
-   DATABASE_HOST=localhost
-   DATABASE_PORT=5432
-   DATABASE_NAME=maternal_health
-   DATABASE_USER=postgres
+3. The `.env` file is already configured for development with SQLite database.
+4. Start the backend server:
+   ```bash
+   npm run dev
+   ```
+   The server will run on `http://localhost:5000`
+
+### 2. Frontend Setup
+
+1. Open a new terminal and navigate to the `frontend` folder:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   The app will be available at `http://localhost:5173`
+
+## 📡 API Endpoints
+
+### Chat
+- `POST /api/v1/chat/message` - Send a message to the AI assistant
+
+### Users
+- `GET /api/v1/users/profile` - Get user profile
+- `PUT /api/v1/users/profile` - Update user profile
+
+### Vitals
+- `POST /api/v1/vitals/log` - Log vitals (blood pressure, weight, fetal movement)
+- `GET /api/v1/vitals` - Get vitals history
+- `GET /api/v1/vitals/alerts` - Get risk alerts
+
+### Appointments
+- `POST /api/v1/appointments` - Schedule an appointment
+- `GET /api/v1/appointments` - Get upcoming appointments
+
+## 🔧 Development
+
+### Running Tests
+```bash
+# Backend
+cd backend && npm test
+
+# Frontend
+cd frontend && npm test
+```
+
+### Building for Production
+```bash
+# Backend
+cd backend && npm run build && npm start
+
+# Frontend
+cd frontend && npm run build
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## ⚠️ Disclaimer
+
+This application is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare providers for medical concerns.
    DATABASE_PASSWORD=postgres
    
    OPENAI_API_KEY=your_openai_or_github_pat_here
