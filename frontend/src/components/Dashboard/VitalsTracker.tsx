@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Activity, HeartPulse, Scale } from 'lucide-react';
 import axios from 'axios';
 import { cn } from '../../utils/tw';
+import { useAuth } from '../../context/AuthContext';
 
 interface VitalsLog {
   id: string;
@@ -76,13 +77,16 @@ function VitalsWidget({ title, value, unit, status, trend, icon: Icon }: VitalsW
 export default function VitalsTracker() {
   const [vitals, setVitals] = useState<VitalsLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchVitals = async () => {
       try {
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
         const response = await axios.get(`${baseUrl}/vitals`, {
-          headers: { 'x-user-id': 'test-user-id' }
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          }
         });
         setVitals(response.data);
       } catch (error) {
@@ -92,8 +96,10 @@ export default function VitalsTracker() {
       }
     };
 
-    fetchVitals();
-  }, []);
+    if (token) {
+      fetchVitals();
+    }
+  }, [token]);
 
   const getLatestValue = (field: keyof VitalsLog) => {
     if (vitals.length === 0) return null;
