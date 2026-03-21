@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import PregnancyTracker from '../components/Dashboard/PregnancyTracker';
 import VitalsTracker from '../components/Dashboard/VitalsTracker';
@@ -6,10 +5,12 @@ import RiskAlerts from '../components/Dashboard/RiskAlerts';
 import AppointmentsWidget from '../components/Dashboard/AppointmentsWidget';
 import VitalsLogForm from '../components/Dashboard/VitalsLogForm';
 import { Stethoscope } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const [showVitalsForm, setShowVitalsForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { user } = useAuth();
 
   const handleLogSuccess = () => {
     setRefreshKey(prev => prev + 1);
@@ -20,7 +21,9 @@ export default function Dashboard() {
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-maternal-900 tracking-tight">Good morning, Jane! 👋</h1>
+          <h1 className="text-3xl font-bold text-maternal-900 tracking-tight">
+            Good morning, {user?.name.split(' ')[0] || 'there'}! 👋
+          </h1>
           <p className="text-maternal-600 mt-2 text-lg">Here's your maternal health summary for today.</p>
         </div>
         <button 
