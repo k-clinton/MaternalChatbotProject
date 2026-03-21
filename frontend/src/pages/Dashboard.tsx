@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PregnancyTracker from '../components/Dashboard/PregnancyTracker';
+import HealthSummary from '../components/Dashboard/HealthSummary';
 import VitalsTracker from '../components/Dashboard/VitalsTracker';
 import RiskAlerts from '../components/Dashboard/RiskAlerts';
 import AppointmentsWidget from '../components/Dashboard/AppointmentsWidget';
@@ -37,6 +38,7 @@ export default function Dashboard() {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
+          <HealthSummary key={`summary-${refreshKey}`} />
           <PregnancyTracker key={`pregnancy-${refreshKey}`} />
           <VitalsTracker key={`vitals-${refreshKey}`} />
         </div>
