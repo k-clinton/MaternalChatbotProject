@@ -5,7 +5,7 @@ import { User, Bell, Shield, Save, Loader2, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Settings() {
-  const { user, token, logout, login } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
