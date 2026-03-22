@@ -17,7 +17,7 @@ export const databaseConfig: DataSourceOptions = {
   database: process.env.DATABASE_NAME || 'maternal_health',
   entities: [User, VitalsLog, Appointment, Medication],
   migrations: ['src/database/migrations/*.ts'], // Path to your migration files
-   synchronize: true, // Set to true for development to auto-create tables
+  synchronize: false, // Set to false when using migrations!
   logging: true,
 };
 
