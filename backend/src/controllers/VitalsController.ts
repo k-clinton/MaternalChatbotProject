@@ -22,11 +22,21 @@ export class VitalsController {
       });
 
       await VitalsController.vitalsRepository.save(log);
+      
+      // Real-time risk assessment
+      const baselineAlert = RiskAssessmentService.evaluateVitals(log);
+      
+      // Trend analysis (fetch recent 5 logs including the new one)
+      const userLogs = await VitalsController.vitalsRepository.find({
+        where: { userId },
+        order: { loggedAt: 'DESC' },
+        take: 5
+      });
+      const trendAlert = RiskAssessmentService.evaluateTrends(userLogs);
 
-      // Simple real-time baseline risk assessment
-      const riskAlert = RiskAssessmentService.evaluateVitals(log);
+      const finalAlert = baselineAlert.isRisk ? baselineAlert : trendAlert;
 
-      return res.status(201).json({ log, alert: riskAlert });
+      return res.status(201).json({ log, alert: finalAlert });
     } catch (error) {
       console.error('VitalsController logVitals error:', error);
       return res.status(500).json({ error: 'Failed to save vitals log' });
@@ -62,11 +72,11 @@ export class VitalsController {
         take: 10
       });
 
-      const alerts = logs
+      const baselineAlerts = logs
         .map(log => RiskAssessmentService.evaluateVitals(log))
         .filter(alert => alert.isRisk)
         .map((alert, index) => ({
-          id: `alert-${index}`,
+          id: `baseline-alert-${index}`,
           type: "warning",
           title: alert.message?.includes('blood pressure') ? 'Elevated Blood Pressure' : 
                  alert.message?.includes('fetal movement') ? 'Low Fetal Movement' : 'Health Alert',
@@ -74,7 +84,17 @@ export class VitalsController {
           time: logs[index]?.loggedAt ? new Date(logs[index].loggedAt).toLocaleString() : 'Recently'
         }));
 
-      return res.status(200).json(alerts);
+      // Detect trends in the fetched logs
+      const trendAlert = RiskAssessmentService.evaluateTrends(logs);
+      const trendAlerts = trendAlert.isRisk ? [{
+        id: `trend-alert-0`,
+        type: "info", // Trend alerts can be info or warning
+        title: trendAlert.message?.includes('weight') ? 'Rapid Weight Gain' : 'Health Trend Alert',
+        message: trendAlert.message || '',
+        time: 'Recently'
+      }] : [];
+
+      return res.status(200).json([...baselineAlerts, ...trendAlerts]);
     } catch (error) {
       console.error('VitalsController getAlerts error:', error);
       return res.status(500).json({ error: 'Failed to fetch alerts' });
