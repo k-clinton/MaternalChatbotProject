@@ -10,6 +10,7 @@ interface Message {
   text: string;
   timestamp: Date;
   isUrgent?: boolean;
+  recommendedAction?: string | null;
 }
 
 export default function ChatbotInterface() {
@@ -80,7 +81,8 @@ export default function ChatbotInterface() {
         sender: 'bot',
         text: response.data.reply || "I'm sorry, I couldn't process that request.",
         timestamp: response.data.timestamp ? new Date(response.data.timestamp) : new Date(),
-        isUrgent: response.data.isUrgent
+        isUrgent: response.data.isUrgent,
+        recommendedAction: response.data.recommendedAction
       };
       
       setMessages(prev => [...prev, botMsg]);
@@ -140,12 +142,19 @@ export default function ChatbotInterface() {
                     : "bg-white text-maternal-800 border border-maternal-100 rounded-tl-none"
               )}>
                 {msg.isUrgent && (
-                  <div className="flex items-center gap-2 text-red-700 mb-2 border-b border-red-200/50 pb-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span className="text-sm font-bold uppercase tracking-wide">Urgent Medical Alert</span>
+                  <div className="flex flex-col gap-2 mb-3 border-b border-red-200/50 pb-3">
+                    <div className="flex items-center gap-2 text-red-700">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span className="text-sm font-bold uppercase tracking-wide">Urgent Medical Alert</span>
+                    </div>
+                    {msg.recommendedAction && (
+                      <div className="bg-red-100 p-3 rounded-lg text-red-900 text-sm font-semibold border border-red-200 shadow-sm animate-pulse">
+                        Recommended Action: {msg.recommendedAction}
+                      </div>
+                    )}
                   </div>
                 )}
-                {msg.text}
+                <div className="whitespace-pre-wrap">{msg.text}</div>
               </div>
               <span className={cn(
                 "text-[11px] text-maternal-400 flex items-center gap-1 px-1",
