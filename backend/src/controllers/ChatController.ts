@@ -58,6 +58,7 @@ export class ChatController {
       return res.status(200).json({
         reply: response.text,
         isUrgent: response.isUrgent,
+        recommendedAction: response.recommendedAction,
         timestamp: new Date().toISOString()
       });
 

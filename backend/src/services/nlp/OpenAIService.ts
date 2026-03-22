@@ -26,7 +26,7 @@ export class OpenAIService {
     message: string,
     history: { role: 'user' | 'assistant', content: string }[] = [],
     userContext: string = ''
-  ): Promise<{ text: string; isUrgent: boolean }> {
+  ): Promise<{ text: string; isUrgent: boolean; recommendedAction: string | null }> {
     try {
       const dynamicSystemPrompt = `You are a compassionate, professional, and highly knowledgeable Maternal Care Assistant chatbot.
 Your primary role is to answer questions related to pregnancy, monitor symptoms, and provide triage analysis.
@@ -34,12 +34,12 @@ Your primary role is to answer questions related to pregnancy, monitor symptoms,
 ${userContext ? `CURRENT PATIENT DATA:\n${userContext}\n` : ''}
 
 CRITICAL RULES:
-1. If the user mentions any severe symptoms (e.g., severe headache, heavy bleeding, decreased fetal movement, chest pain, leaking fluid), you MUST flag the input as URGENT.
-2. In your response for severe symptoms, you MUST advise them to seek immediate medical attention or contact their healthcare provider.
+1. If the user mentions any severe symptoms (e.g., severe headache, heavy bleeding, decreased fetal movement, chest pain, leaking fluid), you MUST set isUrgent to true.
+2. If isUrgent is true, you MUST provide a specific recommendedAction (e.g., "Contact your doctor immediately", "Go to the ER").
 3. Be reassuring but never diagnose. State clearly that you are an AI assistant and not a doctor.
 4. Keep responses concise and easy to understand.
-5. Reference the patient's specific health data (like weeks pregnant or recent vitals) if relevant to provide personalized support.
-6. Dont use imojis except for warnings`;
+5. Reference the patient's specific health data if relevant.
+6. YOU MUST RESPOND IN JSON FORMAT with the following keys: "reply", "isUrgent", "recommendedAction" (string or null).`;
 
       const messages: any[] = [
         { role: 'system', content: dynamicSystemPrompt },
@@ -47,8 +47,6 @@ CRITICAL RULES:
         { role: 'user', content: message }
       ];
 
-      // Note: We use an older model string like gpt-4 for general use, or gpt-3.5-turbo for speed.
-      // If we don't have a real API key in dev, we return a mock response.
       if (!process.env.OPENAI_API_KEY) {
         return this.mockProcessMessage(message);
       }
@@ -56,18 +54,19 @@ CRITICAL RULES:
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
-        temperature: 0.2, // Low temperature for consistent medical triage
-        max_tokens: 250,
+        temperature: 0.2,
+        max_tokens: 400,
+        response_format: { type: 'json_object' }
       });
 
-      const replyText = response.choices[0].message?.content || "I'm sorry, I couldn't process that request.";
+      const rawContent = response.choices[0].message?.content || "{}";
+      const parsed = JSON.parse(rawContent);
 
-      // Determine urgency based on keywords or secondary LLM call
-      // For simplicity in this iteration, we use simple keyword matching combined with the LLM's instructed output
-      const urgentKeywords = ['immediate medical attention', 'emergency', 'urgent', 'healthcare provider immediately', '911'];
-      const isUrgent = urgentKeywords.some(keyword => replyText.toLowerCase().includes(keyword));
-
-      return { text: replyText, isUrgent };
+      return {
+        text: parsed.reply || "I'm sorry, I couldn't process that request.",
+        isUrgent: !!parsed.isUrgent,
+        recommendedAction: parsed.recommendedAction || null
+      };
 
     } catch (error) {
       console.error("OpenAI Service Error:", error);
@@ -75,20 +74,22 @@ CRITICAL RULES:
     }
   }
 
-  private static mockProcessMessage(message: string): { text: string; isUrgent: boolean } {
+  private static mockProcessMessage(message: string): { text: string; isUrgent: boolean; recommendedAction: string | null } {
     const textLower = message.toLowerCase();
     const isUrgent = textLower.includes('headache') || textLower.includes('bleeding') || textLower.includes('pain');
 
     if (isUrgent) {
       return {
         text: "I noticed you mentioned some concerning symptoms. Please contact your healthcare provider immediately or go to the nearest emergency room.",
-        isUrgent: true
+        isUrgent: true,
+        recommendedAction: "Contact your healthcare provider or go to the ER immediately."
       };
     }
 
     return {
       text: "I've noted that in your health log. Make sure to stay hydrated and rest up. Do you have any other questions regarding your pregnancy?",
-      isUrgent: false
+      isUrgent: false,
+      recommendedAction: null
     };
   }
 }
