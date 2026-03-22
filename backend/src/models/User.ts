@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, BeforeInsert, BeforeUpdate } from 'typeorm';
 import { VitalsLog } from './VitalsLog';
 import { Appointment } from './Appointment';
+import { Medication } from './Medication';
 import * as bcrypt from 'bcryptjs';
 
 @Entity('users')
@@ -34,6 +35,9 @@ export class User {
 
   @OneToMany(() => Appointment, appointment => appointment.user)
   appointments: Appointment[];
+
+  @OneToMany(() => Medication, medication => medication.user)
+  medications: Medication[];
 
   @CreateDateColumn()
   createdAt: Date;
