@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, MessageCircle, Settings as SettingsIcon, Calendar, Activity, LogOut } from 'lucide-react';
+import { Home, MessageCircle, Settings as SettingsIcon, Calendar, Activity, LogOut, Pill, BookOpen } from 'lucide-react';
 import { cn } from '../../utils/tw';
 import { useAuth } from '../../context/AuthContext';
 
@@ -16,6 +16,8 @@ export default function Layout() {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: Home },
     { name: 'Vitals History', path: '/vitals', icon: Activity },
+    { name: 'Medications', path: '/medications', icon: Pill },
+    { name: 'Library', path: '/library', icon: BookOpen },
     { name: 'Appointments', path: '/appointments', icon: Calendar },
     { name: 'Chat Assistant', path: '/chat', icon: MessageCircle },
     { name: 'Settings', path: '/settings', icon: SettingsIcon },
