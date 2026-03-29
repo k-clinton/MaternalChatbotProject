@@ -13,7 +13,7 @@ export class ChatController {
    */
   public static async sendMessage(req: AuthRequest, res: Response) {
     try {
-      const { message, history } = req.body;
+      const { message, history, language } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -52,7 +52,7 @@ export class ChatController {
         // Continue without context if DB fetch fails
       }
       
-      const response = await OpenAIService.processMessage(message, history || [], userContext);
+      const response = await OpenAIService.processMessage(message, history || [], userContext, language || 'English');
 
       // Return the assistant's reply and any urgency flags
       return res.status(200).json({
