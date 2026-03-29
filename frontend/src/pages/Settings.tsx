@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { User, Bell, Shield, Save, Loader2, LogOut } from 'lucide-react';
+import { cn } from '../utils/tw';
 import { useAuth } from '../context/AuthContext';
 
 export default function Settings() {
@@ -14,7 +15,10 @@ export default function Settings() {
     name: user?.name || '',
     weeksPregnant: user?.weeksPregnant?.toString() || '',
     dueDate: user?.dueDate || '',
-    emergencyContact: user?.emergencyContact || ''
+    emergencyContact: user?.emergencyContact || '',
+    emailNotifications: user?.emailNotifications ?? true,
+    whatsappNotifications: user?.whatsappNotifications ?? false,
+    whatsappNumber: user?.whatsappNumber || ''
   });
 
   useEffect(() => {
@@ -23,7 +27,10 @@ export default function Settings() {
         name: user.name || '',
         weeksPregnant: user.weeksPregnant?.toString() || '',
         dueDate: user.dueDate ? new Date(user.dueDate).toISOString().split('T')[0] : '',
-        emergencyContact: user.emergencyContact || ''
+        emergencyContact: user.emergencyContact || '',
+        emailNotifications: user.emailNotifications ?? true,
+        whatsappNotifications: user.whatsappNotifications ?? false,
+        whatsappNumber: user.whatsappNumber || ''
       });
     }
   }, [user]);
@@ -157,24 +164,59 @@ export default function Settings() {
             <h2 className="text-xl font-bold text-maternal-900">Notifications</h2>
           </div>
           
-          <div className="p-8 space-y-6">
-             <div className="flex items-center justify-between group">
+          <div className="p-8 space-y-8">
+             <div 
+               className="flex items-center justify-between cursor-pointer group"
+               onClick={() => setFormData({...formData, emailNotifications: !formData.emailNotifications})}
+             >
                <div>
                  <p className="font-bold text-maternal-800">Email Alerts</p>
                  <p className="text-sm text-maternal-500">Receive weekly pregnancy updates and checklists</p>
                </div>
-               <div className="w-12 h-6 bg-maternal-600 rounded-full relative cursor-pointer shadow-inner">
-                 <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1 shadow-md"></div>
+               <div className={cn(
+                 "w-12 h-6 rounded-full relative transition-all duration-200",
+                 formData.emailNotifications ? "bg-maternal-600 shadow-inner" : "bg-maternal-200"
+               )}>
+                 <div className={cn(
+                   "w-4 h-4 bg-white rounded-full absolute top-1 shadow-md transition-all duration-200",
+                   formData.emailNotifications ? "right-1" : "left-1"
+                 )}></div>
                </div>
              </div>
-             <div className="flex items-center justify-between group">
-               <div>
-                 <p className="font-bold text-maternal-800">SMS Reminders</p>
-                 <p className="text-sm text-maternal-500">Get text reminders 2 hours before appointments</p>
+
+             <div className="space-y-4">
+               <div 
+                 className="flex items-center justify-between cursor-pointer group"
+                 onClick={() => setFormData({...formData, whatsappNotifications: !formData.whatsappNotifications})}
+               >
+                 <div>
+                   <p className="font-bold text-maternal-800">WhatsApp Reminders</p>
+                   <p className="text-sm text-maternal-500">Get reminders for appointments and medications via WhatsApp</p>
+                 </div>
+                 <div className={cn(
+                   "w-12 h-6 rounded-full relative transition-all duration-200",
+                   formData.whatsappNotifications ? "bg-green-500 shadow-inner" : "bg-maternal-200"
+                 )}>
+                   <div className={cn(
+                     "w-4 h-4 bg-white rounded-full absolute top-1 shadow-md transition-all duration-200",
+                     formData.whatsappNotifications ? "right-1" : "left-1"
+                   )}></div>
+                 </div>
                </div>
-               <div className="w-12 h-6 bg-maternal-200 rounded-full relative cursor-pointer shadow-inner">
-                 <div className="w-4 h-4 bg-white rounded-full absolute top-1 left-1 shadow-md transition-all group-active:scale-95"></div>
-               </div>
+
+               {formData.whatsappNotifications && (
+                 <div className="animate-in slide-in-from-top-2 duration-300">
+                   <label className="text-sm font-bold text-maternal-700 ml-1">WhatsApp Number</label>
+                   <input 
+                     type="text"
+                     value={formData.whatsappNumber}
+                     onChange={(e) => setFormData({...formData, whatsappNumber: e.target.value})}
+                     className="w-full mt-2 px-5 py-3.5 rounded-2xl border border-maternal-200 focus:ring-2 focus:ring-maternal-500 focus:border-transparent outline-none transition-all"
+                     placeholder="+1234567890"
+                   />
+                   <p className="text-[11px] text-maternal-500 mt-2 ml-1">Include country code (e.g., +254 for Kenya)</p>
+                 </div>
+               )}
              </div>
           </div>
         </section>
