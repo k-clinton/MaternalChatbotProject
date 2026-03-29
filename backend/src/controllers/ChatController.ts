@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/AuthMiddleware';
 import dataSource from '../database/data-source';
 import { User } from '../models/User';
 import { VitalsLog } from '../models/VitalsLog';
+import { NotificationService } from '../services/NotificationService';
 
 export class ChatController {
   
@@ -53,6 +54,18 @@ export class ChatController {
       }
       
       const response = await OpenAIService.processMessage(message, history || [], userContext, language || 'English');
+
+      // Trigger notification if the message is detected as urgent
+      if (response.isUrgent) {
+        const userRepo = dataSource.getRepository(User);
+        const user = await userRepo.findOneBy({ id: userId });
+        if (user) {
+          // Fire and forget notification to not block the chat response
+          NotificationService.sendUrgencyAlert(user, response.text).catch(err => 
+            console.error('Error sending urgency alert:', err)
+          );
+        }
+      }
 
       // Return the assistant's reply and any urgency flags
       return res.status(200).json({
