@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Clock, AlertTriangle } from 'lucide-react';
+import { Send, Bot, User, Clock, AlertTriangle, Mic, MicOff, Globe, Volume2, VolumeX, Play, Square } from 'lucide-react';
 import axios from 'axios';
 import { cn } from '../../utils/tw';
 import { useAuth } from '../../context/AuthContext';
@@ -19,20 +19,30 @@ export default function ChatbotInterface() {
 
   useEffect(() => {
     if (user) {
+      const initialText = `Hello ${user.name.split(' ')[0]}! I'm your maternal care assistant. How are you feeling today? You can log symptoms, ask questions about your pregnancy, or check your upcoming milestones.`;
       setMessages([
         {
           id: '1',
           sender: 'bot',
-          text: `Hello ${user.name.split(' ')[0]}! I'm your maternal care assistant. How are you feeling today? You can log symptoms, ask questions about your pregnancy, or check your upcoming milestones.`,
+          text: initialText,
           timestamp: new Date()
         }
       ]);
+      // Initial greeting can speak if auto-speak is on
+      if (isAutoSpeak) {
+        speak(initialText, '1');
+      }
     }
   }, [user]);
 
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [isListening, setIsListening] = useState(false);
+  const [isAutoSpeak, setIsAutoSpeak] = useState(true);
+  const [currentlySpeaking, setCurrentlySpeaking] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,6 +51,73 @@ export default function ChatbotInterface() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputValue(transcript);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      setIsListening(true);
+      recognitionRef.current?.start();
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    setCurrentlySpeaking(null);
+  };
+
+  const speak = (text: string, messageId?: string) => {
+    if (!window.speechSynthesis) return;
+    
+    // If already speaking this message, stop it
+    if (currentlySpeaking === messageId && messageId) {
+      stopSpeaking();
+      return;
+    }
+
+    window.speechSynthesis.cancel(); // Stop any current speech
+    const utterance = new SpeechSynthesisUtterance(text);
+    // Map language to BCP 47 tags
+    const langMap: Record<string, string> = {
+      'English': 'en-US',
+      'Swahili': 'sw-KE',
+      'Luo': 'en-KE'
+    };
+    utterance.lang = langMap[selectedLanguage] || 'en-US';
+    
+    if (messageId) {
+      setCurrentlySpeaking(messageId);
+      utterance.onend = () => setCurrentlySpeaking(null);
+      utterance.onerror = () => setCurrentlySpeaking(null);
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -53,7 +130,7 @@ export default function ChatbotInterface() {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev: Message[]) => [...prev, userMsg]);
     setInputValue('');
     setIsLoading(true);
 
@@ -67,7 +144,8 @@ export default function ChatbotInterface() {
       const response = await axios.post(`${baseUrl}/chat/message`, 
         {
           message: userText,
-          history
+          history,
+          language: selectedLanguage
         },
         {
           headers: { 
@@ -85,7 +163,10 @@ export default function ChatbotInterface() {
         recommendedAction: response.data.recommendedAction
       };
       
-      setMessages(prev => [...prev, botMsg]);
+      setMessages((prev: Message[]) => [...prev, botMsg]);
+      if (isAutoSpeak) {
+        speak(botMsg.text, botMsg.id);
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
       const errorMsg: Message = {
@@ -95,7 +176,7 @@ export default function ChatbotInterface() {
         timestamp: new Date(),
         isUrgent: false
       };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages((prev: Message[]) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
@@ -113,6 +194,32 @@ export default function ChatbotInterface() {
             <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
             Online • Powered by AI
           </p>
+        </div>
+        
+        <div className="ml-auto flex items-center gap-4">
+          <button 
+            onClick={() => setIsAutoSpeak(!isAutoSpeak)}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              isAutoSpeak ? "bg-maternal-100 text-maternal-600" : "bg-gray-100 text-gray-400"
+            )}
+            title={isAutoSpeak ? "Auto-speak enabled" : "Auto-speak disabled"}
+          >
+            {isAutoSpeak ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+          
+          <div className="flex items-center gap-2 border-l border-maternal-200 pl-4">
+            <Globe className="w-4 h-4 text-maternal-400" />
+            <select 
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="bg-white border border-maternal-200 rounded-lg px-2 py-1 text-xs font-semibold text-maternal-700 outline-none focus:ring-1 focus:ring-maternal-500"
+            >
+              <option value="English">English</option>
+              <option value="Swahili">Kiswahili</option>
+              <option value="Luo">Dholuo</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -154,7 +261,23 @@ export default function ChatbotInterface() {
                     )}
                   </div>
                 )}
-                <div className="whitespace-pre-wrap">{msg.text}</div>
+                <div className="flex justify-between items-start gap-4">
+                  <div className="whitespace-pre-wrap flex-1">{msg.text}</div>
+                  {msg.sender === 'bot' && (
+                    <button 
+                      onClick={() => speak(msg.text, msg.id)}
+                      className={cn(
+                        "p-1.5 rounded-lg transition-all flex-shrink-0",
+                        currentlySpeaking === msg.id 
+                          ? "bg-maternal-100 text-maternal-600" 
+                          : "hover:bg-maternal-50 text-maternal-400"
+                      )}
+                      title={currentlySpeaking === msg.id ? "Stop reading" : "Read aloud"}
+                    >
+                      {currentlySpeaking === msg.id ? <Square className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                    </button>
+                  )}
+                </div>
               </div>
               <span className={cn(
                 "text-[11px] text-maternal-400 flex items-center gap-1 px-1",
@@ -184,6 +307,16 @@ export default function ChatbotInterface() {
             className="flex-1 min-h-[3rem] max-h-32 rounded-2xl border border-maternal-200 px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-maternal-500 focus:border-transparent resize-none leading-relaxed text-maternal-900 shadow-sm placeholder:text-maternal-400"
             rows={1}
           />
+          <button 
+            onClick={toggleListening}
+            className={cn(
+              "rounded-2xl p-3.5 transition-all shadow-sm mb-0.5",
+              isListening ? "bg-red-500 text-white animate-pulse" : "bg-maternal-50 text-maternal-600 hover:bg-maternal-100"
+            )}
+            title={isListening ? "Stop listening" : "Voice message"}
+          >
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
           <button 
             onClick={handleSend}
             disabled={!inputValue.trim() || isLoading}
