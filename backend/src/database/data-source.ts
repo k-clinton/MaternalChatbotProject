@@ -5,6 +5,7 @@ import { User } from '../models/User';
 import { VitalsLog } from '../models/VitalsLog';
 import { Appointment } from '../models/Appointment';
 import { Medication } from '../models/Medication';
+import { Doctor } from '../models/Doctor';
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ export const databaseConfig: DataSourceOptions = {
   username: process.env.DATABASE_USER || 'root',
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME || 'maternal_health',
-  entities: [User, VitalsLog, Appointment, Medication],
+  entities: [User, VitalsLog, Appointment, Medication, Doctor],
   migrations: ['src/database/migrations/*.ts'], // Path to your migration files
   synchronize: false, // Set to false when using migrations!
   logging: true,
