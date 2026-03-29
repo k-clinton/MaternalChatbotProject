@@ -31,7 +31,18 @@ export class UserController {
       const token = UserController.generateToken(user);
 
       return res.status(201).json({
-        user: { id: user.id, name: user.name, email: user.email, weeksPregnant: user.weeksPregnant },
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          weeksPregnant: user.weeksPregnant, 
+          dueDate: user.dueDate,
+          emergencyContact: user.emergencyContact,
+          emailNotifications: user.emailNotifications,
+          whatsappNotifications: user.whatsappNotifications,
+          whatsappNumber: user.whatsappNumber,
+          role: user.role
+        },
         token
       });
     } catch (error) {
@@ -60,7 +71,18 @@ export class UserController {
       const token = UserController.generateToken(user);
 
       return res.status(200).json({
-        user: { id: user.id, name: user.name, email: user.email, weeksPregnant: user.weeksPregnant, role: user.role },
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          weeksPregnant: user.weeksPregnant, 
+          dueDate: user.dueDate,
+          emergencyContact: user.emergencyContact,
+          emailNotifications: user.emailNotifications,
+          whatsappNotifications: user.whatsappNotifications,
+          whatsappNumber: user.whatsappNumber,
+          role: user.role
+        },
         token
       });
     } catch (error) {
