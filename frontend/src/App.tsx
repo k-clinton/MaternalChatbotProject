@@ -9,6 +9,7 @@ import VitalsHistory from './pages/VitalsHistory';
 import Appointments from './pages/Appointments';
 import Medications from './pages/Medications';
 import Library from './pages/Library';
+import Doctors from './pages/Doctors';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -27,6 +28,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="vitals" element={<VitalsHistory />} />
               <Route path="medications" element={<Medications />} />
+              <Route path="doctors" element={<Doctors />} />
               <Route path="library" element={<Library />} />
               <Route path="appointments" element={<Appointments />} />
               <Route path="chat" element={<Chatbot />} />
