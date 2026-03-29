@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, MessageCircle, Settings as SettingsIcon, Calendar, Activity, LogOut, Pill, BookOpen } from 'lucide-react';
+import { Home, MessageCircle, Settings as SettingsIcon, Calendar, Activity, LogOut, Pill, BookOpen, Users } from 'lucide-react';
 import { cn } from '../../utils/tw';
 import { useAuth } from '../../context/AuthContext';
 
@@ -17,6 +17,7 @@ export default function Layout() {
     { name: 'Dashboard', path: '/', icon: Home },
     { name: 'Vitals History', path: '/vitals', icon: Activity },
     { name: 'Medications', path: '/medications', icon: Pill },
+    { name: 'Doctors', path: '/doctors', icon: Users },
     { name: 'Library', path: '/library', icon: BookOpen },
     { name: 'Appointments', path: '/appointments', icon: Calendar },
     { name: 'Chat Assistant', path: '/chat', icon: MessageCircle },
@@ -33,7 +34,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen flex bg-maternal-50">
+    <div className="h-screen flex bg-maternal-50 overflow-hidden">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-maternal-200 flex flex-col">
         <div className="p-6">
@@ -43,7 +44,7 @@ export default function Layout() {
           </h1>
         </div>
         
-        <nav className="flex-1 px-4 space-y-2">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;

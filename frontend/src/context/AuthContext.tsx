@@ -7,6 +7,9 @@ interface User {
   weeksPregnant?: number;
   dueDate?: string;
   emergencyContact?: string;
+  emailNotifications?: boolean;
+  whatsappNotifications?: boolean;
+  whatsappNumber?: string;
   role: string;
 }
 

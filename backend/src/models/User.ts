@@ -30,6 +30,15 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   emergencyContact: string;
 
+  @Column({ default: true })
+  emailNotifications: boolean;
+
+  @Column({ default: false })
+  whatsappNotifications: boolean;
+
+  @Column({ nullable: true })
+  whatsappNumber: string;
+
   @OneToMany(() => VitalsLog, vitalsLog => vitalsLog.user)
   vitalsLogs: VitalsLog[];
 
