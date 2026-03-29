@@ -6,7 +6,7 @@ import { cn } from '../utils/tw';
 import { useAuth } from '../context/AuthContext';
 
 export default function Settings() {
-  const { user, token, logout } = useAuth();
+  const { user, token, updateUser, logout } = useAuth();
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -61,9 +61,7 @@ export default function Settings() {
       // Update local auth context with new user data
       // Note: Assuming login(data) updates the user object
       if (response.data) {
-        // We don't have a direct 'updateUser' in AuthContext, 
-        // so we'll just show success and rely on the next refresh or manual update if possible
-        // Better: login(response.data.user, token) if the response has it
+        updateUser(response.data);
         setMessage({ type: 'success', text: 'Profile updated successfully!' });
       }
     } catch (error) {
