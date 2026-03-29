@@ -25,11 +25,13 @@ export class OpenAIService {
   public static async processMessage(
     message: string,
     history: { role: 'user' | 'assistant', content: string }[] = [],
-    userContext: string = ''
+    userContext: string = '',
+    language: string = 'English'
   ): Promise<{ text: string; isUrgent: boolean; recommendedAction: string | null }> {
     try {
       const dynamicSystemPrompt = `You are a compassionate, professional, and highly knowledgeable Maternal Care Assistant chatbot.
 Your primary role is to answer questions related to pregnancy, monitor symptoms, and provide triage analysis.
+Current language: ${language}. PLEASE RESPOND IN ${language}.
 
 ${userContext ? `CURRENT PATIENT DATA:\n${userContext}\n` : ''}
 
