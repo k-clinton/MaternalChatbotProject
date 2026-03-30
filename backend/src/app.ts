@@ -11,7 +11,7 @@ const app: Application = express();
 
 // Middleware
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: [process.env.FRONTEND_URL || 'http://localhost:3000', 'http://localhost:5173'], credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -53,7 +53,7 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // 404 handler
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((req: Request, res: Response, _next: NextFunction) => {
   res.status(404).json({ error: 'Endpoint not found', path: req.path });
 });
 
@@ -71,7 +71,7 @@ app.use(
   })
 );
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error('Error:', err);
 
   if (err.name === 'UnauthorizedError') {

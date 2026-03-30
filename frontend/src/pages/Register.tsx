@@ -35,8 +35,12 @@ const Register: React.FC = () => {
       const { token, user } = response.data;
       login(token, user);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      } else {
+        setError('An unexpected error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }

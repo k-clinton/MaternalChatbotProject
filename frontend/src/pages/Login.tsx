@@ -24,8 +24,12 @@ const Login: React.FC = () => {
       const { token, user } = response.data;
       login(token, user);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to login. Please check your credentials.');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.error || 'Failed to login. Please check your credentials.');
+      } else {
+        setError('An unexpected error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }
