@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Clock, AlertTriangle, Mic, MicOff, Globe, Volume2, VolumeX, Play, Square } from 'lucide-react';
 import axios from 'axios';
 import { cn } from '../../utils/tw';
@@ -13,85 +13,51 @@ interface Message {
   recommendedAction?: string | null;
 }
 
+interface SpeechRecognitionEvent extends Event {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
 export default function ChatbotInterface() {
   const { user, token } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-
-  useEffect(() => {
-    if (user) {
-      const initialText = `Hello ${user.name.split(' ')[0]}! I'm your maternal care assistant. How are you feeling today? You can log symptoms, ask questions about your pregnancy, or check your upcoming milestones.`;
-      setMessages([
-        {
-          id: '1',
-          sender: 'bot',
-          text: initialText,
-          timestamp: new Date()
-        }
-      ]);
-      // Initial greeting can speak if auto-speak is on
-      if (isAutoSpeak) {
-        speak(initialText, '1');
-      }
-    }
-  }, [user]);
-
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [isListening, setIsListening] = useState(false);
   const [isAutoSpeak, setIsAutoSpeak] = useState(true);
+  const [isVoiceSupported, setIsVoiceSupported] = useState(true);
+  const [userInteracted, setUserInteracted] = useState(false);
   const [currentlySpeaking, setCurrentlySpeaking] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInputValue(transcript);
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
-  }, []);
-
-  const toggleListening = () => {
-    if (isListening) {
-      recognitionRef.current?.stop();
-    } else {
-      setIsListening(true);
-      recognitionRef.current?.start();
-    }
-  };
-
-  const stopSpeaking = () => {
+  const stopSpeaking = useCallback(() => {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     setCurrentlySpeaking(null);
-  };
+  }, []);
 
-  const speak = (text: string, messageId?: string) => {
+  const speak = useCallback((text: string, messageId?: string) => {
     if (!window.speechSynthesis) return;
     
     // If already speaking this message, stop it
@@ -101,28 +67,37 @@ export default function ChatbotInterface() {
     }
 
     window.speechSynthesis.cancel(); // Stop any current speech
-    const utterance = new SpeechSynthesisUtterance(text);
-    // Map language to BCP 47 tags
-    const langMap: Record<string, string> = {
-      'English': 'en-US',
-      'Swahili': 'sw-KE',
-      'Luo': 'en-KE'
-    };
-    utterance.lang = langMap[selectedLanguage] || 'en-US';
     
-    if (messageId) {
-      setCurrentlySpeaking(messageId);
-      utterance.onend = () => setCurrentlySpeaking(null);
-      utterance.onerror = () => setCurrentlySpeaking(null);
-    }
+    // Add a short delay to ensure the previous speech is fully cancelled
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Map language to BCP 47 tags
+      const langMap: Record<string, string> = {
+        'English': 'en-US',
+        'Swahili': 'sw-KE',
+        'Luo': 'en-KE'
+      };
+      utterance.lang = langMap[selectedLanguage] || 'en-US';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      
+      if (messageId) {
+        setCurrentlySpeaking(messageId);
+        utterance.onend = () => setCurrentlySpeaking(null);
+        utterance.onerror = () => setCurrentlySpeaking(null);
+      }
 
-    window.speechSynthesis.speak(utterance);
-  };
+      window.speechSynthesis.speak(utterance);
+    }, 50);
+  }, [currentlySpeaking, selectedLanguage, stopSpeaking]);
 
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleSend = useCallback(async (overrideText?: string) => {
+    const textToSend = overrideText || inputValue;
+    if (!textToSend.trim() || isLoading) return;
 
-    const userText = inputValue;
+    setUserInteracted(true);
+    const userText = textToSend;
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
@@ -179,6 +154,94 @@ export default function ChatbotInterface() {
       setMessages((prev: Message[]) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
+    }
+  }, [inputValue, isLoading, messages, token, selectedLanguage, isAutoSpeak, speak]);
+
+  useEffect(() => {
+    if (user && messages.length === 0) {
+      const initialText = `Hello ${user.name.split(' ')[0]}! I'm your maternal care assistant. How are you feeling today? You can log symptoms, ask questions about your pregnancy, or check your upcoming milestones.`;
+      const initialId = '1';
+      setMessages([
+        {
+          id: initialId,
+          sender: 'bot',
+          text: initialText,
+          timestamp: new Date()
+        }
+      ]);
+      
+      // Auto-speak initial message only if user has interacted (to comply with browser policy)
+      // Since this is mount, we likely don't have interaction yet.
+      if (isAutoSpeak && userInteracted) {
+        speak(initialText, initialId);
+      }
+    }
+  }, [user, isAutoSpeak, speak, messages.length, userInteracted]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    const Win = window as unknown as { 
+      SpeechRecognition: new () => SpeechRecognition; 
+      webkitSpeechRecognition: new () => SpeechRecognition; 
+    };
+    const SpeechRecognition = Win.SpeechRecognition || Win.webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        const transcript = event.results[0][0].transcript;
+        setInputValue(transcript);
+        setIsListening(false);
+        // Auto-send if it's a clear command
+        if (transcript.length > 2) {
+          handleSend(transcript);
+        }
+      };
+
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    } else {
+      setIsVoiceSupported(false);
+    }
+  }, [handleSend]);
+
+  const toggleListening = () => {
+    if (!isVoiceSupported) {
+      alert("Speech recognition is not supported in your browser. Please try Chrome or Edge.");
+      return;
+    }
+
+    stopSpeaking(); // Stop bot from talking if user starts talking
+    setUserInteracted(true);
+    
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      setIsListening(true);
+      try {
+        recognitionRef.current?.start();
+      } catch (err) {
+        console.error("Failed to start recognition:", err);
+        setIsListening(false);
+      }
     }
   };
 
@@ -318,7 +381,7 @@ export default function ChatbotInterface() {
             {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </button>
           <button 
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!inputValue.trim() || isLoading}
             className="bg-maternal-600 hover:bg-maternal-700 disabled:bg-maternal-300 disabled:cursor-not-allowed text-white rounded-2xl p-3.5 transition-all shadow-sm mb-0.5"
           >
