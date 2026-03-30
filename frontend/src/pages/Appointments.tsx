@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Calendar, Clock, User, Plus, X, Trash2, Loader2, CheckCircle2, Phone, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -64,7 +64,7 @@ const Appointments: React.FC = () => {
   });
   const { token } = useAuth();
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
       const response = await axios.get(`${baseUrl}/appointments`, {
@@ -76,11 +76,11 @@ const Appointments: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) fetchAppointments();
-  }, [token]);
+  }, [token, fetchAppointments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
