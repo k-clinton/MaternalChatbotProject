@@ -40,6 +40,7 @@ export class ChatController {
         if (user) {
           userContext = `Patient Name: ${user.name}\nWeeks Pregnant: ${user.weeksPregnant || 'Unknown'}`;
           if (user.dueDate) userContext += `\nDue Date: ${user.dueDate}`;
+          if (user.emergencyContact) userContext += `\nEmergency Contact: ${user.emergencyContact}`;
         }
 
         if (latestVitals) {
