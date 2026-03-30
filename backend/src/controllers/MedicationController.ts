@@ -52,8 +52,8 @@ export class MedicationController {
       const userId = req.user?.id;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const medication = await MedicationController.medicationRepository.findOneBy({ id, userId });
-      if (!medication) return res.status(404).json({ error: 'Medication not found' });
+      const medication = await MedicationController.medicationRepository.findOneBy({ id, userId, isActive: true });
+      if (!medication) return res.status(404).json({ error: 'Medication not found or inactive' });
 
       medication.lastTakenAt = new Date();
       await MedicationController.medicationRepository.save(medication);
@@ -71,8 +71,8 @@ export class MedicationController {
       const userId = req.user?.id;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const medication = await MedicationController.medicationRepository.findOneBy({ id, userId });
-      if (!medication) return res.status(404).json({ error: 'Medication not found' });
+      const medication = await MedicationController.medicationRepository.findOneBy({ id, userId, isActive: true });
+      if (!medication) return res.status(404).json({ error: 'Medication not found or already deleted' });
 
       medication.isActive = false; // Soft delete
       await MedicationController.medicationRepository.save(medication);
