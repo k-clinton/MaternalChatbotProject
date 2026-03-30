@@ -21,11 +21,10 @@ export default function Doctors() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
-
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
         const response = await axios.get(`${baseUrl}/doctors`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -36,7 +35,9 @@ export default function Doctors() {
         setIsLoading(false);
       }
     };
-    fetchDoctors();
+    if (token) {
+      fetchDoctors();
+    }
   }, [token]);
 
   const filteredDoctors = doctors.filter(doctor => 
