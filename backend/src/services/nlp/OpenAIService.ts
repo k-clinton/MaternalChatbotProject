@@ -6,15 +6,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'sk-dummy-key-for-local-dev-only-not-for-prod',
 });
 
-const SYSTEM_PROMPT = `You are a compassionate, professional, and highly knowledgeable Maternal Care Assistant chatbot.
-Your primary role is to answer questions related to pregnancy, monitor symptoms, and provide triage analysis.
-CRITICAL RULES:
-1. If the user mentions any severe symptoms (e.g., severe headache, heavy bleeding, decreased fetal movement, chest pain, leaking fluid), you MUST flag the input as URGENT.
-2. In your response for severe symptoms, you MUST advise them to seek immediate medical attention or contact their healthcare provider.
-3. Be reassuring but never diagnose. State clearly that you are an AI assistant and not a doctor.
-4. Keep responses concise and easy to understand.
-5. Dont use imojis except for warnings`;
-
 export class OpenAIService {
   /**
    * Analyzes an incoming message using GPT-4 to provide a response and determine urgency.
@@ -30,22 +21,30 @@ export class OpenAIService {
   ): Promise<{ text: string; isUrgent: boolean; recommendedAction: string | null }> {
     try {
       const dynamicSystemPrompt = `You are a compassionate, professional, and highly knowledgeable Maternal Care Assistant chatbot.
-Your primary role is to answer questions related to pregnancy, monitor symptoms, and provide triage analysis.
+Your primary role is to answer questions related to pregnancy, monitor symptoms, and provide personalized triage analysis.
 Current language: ${language}. PLEASE RESPOND IN ${language}.
 
 ${userContext ? `CURRENT PATIENT DATA:\n${userContext}\n` : ''}
 
-CRITICAL RULES:
-1. If the user mentions any severe symptoms (e.g., severe headache, heavy bleeding, decreased fetal movement, chest pain, leaking fluid), you MUST set isUrgent to true.
-2. If isUrgent is true, you MUST provide a specific recommendedAction (e.g., "Contact your doctor immediately", "Go to the ER").
-3. Be reassuring but never diagnose. State clearly that you are an AI assistant and not a doctor.
-4. Keep responses concise and easy to understand.
-5. Reference the patient's specific health data if relevant.
-6. YOU MUST RESPOND IN JSON FORMAT with the following keys: "reply", "isUrgent", "recommendedAction" (string or null).`;
+CRITICAL TRIAGE RULES:
+1. URGENT SYMPTOMS: If the user mentions any of the following, YOU MUST set "isUrgent" to true and "recommendedAction" to "Seek immediate medical attention":
+   - Severe headache that won't go away
+   - Vision changes (blurriness, flashing lights, spots)
+   - Heavy vaginal bleeding
+   - Decreased or no fetal movement (if in 3rd trimester)
+   - Sudden swelling in face or hands
+   - Severe abdominal pain
+   - Fever over 100.4°F (38°C)
+   - Leaking fluid (potential water breaking)
 
-      const messages: any[] = [
+2. PERSPECTIVE: Always acknowledge the patient's specific health data (like their current week of pregnancy) if provided in the context.
+3. ADVICE: Be reassuring but never provide a definitive diagnosis. State clearly that you are an AI assistant and not a medical professional.
+4. CONCISION: Keep responses empathetic but concise and easy to understand.
+5. JSON FORMAT: YOU MUST RESPOND IN JSON FORMAT with the following keys: "reply", "isUrgent", "recommendedAction" (string or null).`;
+
+      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
         { role: 'system', content: dynamicSystemPrompt },
-        ...history.map(msg => ({ role: msg.role, content: msg.content })),
+        ...history.map(msg => ({ role: msg.role, content: msg.content } as OpenAI.Chat.ChatCompletionMessageParam)),
         { role: 'user', content: message }
       ];
 
