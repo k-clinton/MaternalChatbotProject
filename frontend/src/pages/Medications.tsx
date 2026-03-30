@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Pill, Plus, Check, Clock, Trash2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -26,7 +26,7 @@ export default function Medications() {
 
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
-  const fetchMedications = async () => {
+  const fetchMedications = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await axios.get(`${baseUrl}/medications`, {
@@ -40,11 +40,13 @@ export default function Medications() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, baseUrl]);
 
   useEffect(() => {
-    fetchMedications();
-  }, [token]);
+    if (token) {
+      fetchMedications();
+    }
+  }, [token, fetchMedications]);
 
   const handleAddMedication = async (e: React.FormEvent) => {
     e.preventDefault();

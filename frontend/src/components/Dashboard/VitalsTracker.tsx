@@ -107,19 +107,24 @@ export default function VitalsTracker() {
     return latest[field];
   };
 
-  const getStatus = (value: any, type: string) => {
+  const getStatus = (value: string | number | null, type: string) => {
     if (!value) return 'normal';
     
     switch (type) {
       case 'bloodPressure':
-        const parts = value.split('/');
-        if (parts.length === 2) {
-          const systolic = parseInt(parts[0], 10);
-          return systolic >= 140 ? 'alert' : systolic >= 130 ? 'warning' : 'normal';
+        if (typeof value === 'string') {
+          const parts = value.split('/');
+          if (parts.length === 2) {
+            const systolic = parseInt(parts[0], 10);
+            return systolic >= 140 ? 'alert' : systolic >= 130 ? 'warning' : 'normal';
+          }
         }
         return 'normal';
       case 'fetalMovement':
-        return value < 3 ? 'alert' : value < 10 ? 'warning' : 'normal';
+        if (typeof value === 'number') {
+          return value < 3 ? 'alert' : value < 10 ? 'warning' : 'normal';
+        }
+        return 'normal';
       default:
         return 'normal';
     }
