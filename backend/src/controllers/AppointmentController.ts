@@ -46,4 +46,24 @@ export class AppointmentController {
       return res.status(500).json({ error: 'Failed to schedule appointment' });
     }
   }
+
+  public static async deleteAppointment(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      const { id } = req.params;
+
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const appointment = await AppointmentController.appointmentRepository.findOneBy({ id, userId });
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      await AppointmentController.appointmentRepository.remove(appointment);
+      return res.status(200).json({ message: 'Appointment cancelled successfully' });
+    } catch (error) {
+      console.error('AppointmentController deleteAppointment error:', error);
+      return res.status(500).json({ error: 'Failed to cancel appointment' });
+    }
+  }
 }
