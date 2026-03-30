@@ -1,11 +1,14 @@
 import { Response } from 'express';
 import dataSource from '../database/data-source';
 import { VitalsLog } from '../models/VitalsLog';
+import { User } from '../models/User';
 import { RiskAssessmentService } from '../services/risk/RiskAssessmentService';
+import { NotificationService } from '../services/NotificationService';
 import { AuthRequest } from '../middleware/AuthMiddleware';
 
 export class VitalsController {
   private static vitalsRepository = dataSource.getRepository(VitalsLog);
+  private static userRepository = dataSource.getRepository(User);
 
   public static async logVitals(req: AuthRequest, res: Response) {
     try {
@@ -26,7 +29,7 @@ export class VitalsController {
       // Real-time risk assessment
       const baselineAlert = RiskAssessmentService.evaluateVitals(log);
       
-      // Trend analysis (fetch recent 5 logs including the new one)
+      // Trend analysis
       const userLogs = await VitalsController.vitalsRepository.find({
         where: { userId },
         order: { loggedAt: 'DESC' },
@@ -34,7 +37,21 @@ export class VitalsController {
       });
       const trendAlert = RiskAssessmentService.evaluateTrends(userLogs);
 
-      const finalAlert = baselineAlert.isRisk ? baselineAlert : trendAlert;
+      // Prioritize high severity alerts
+      let finalAlert = baselineAlert.isRisk ? baselineAlert : trendAlert;
+      if (trendAlert.isRisk && trendAlert.severity === 'high' && baselineAlert.severity !== 'high') {
+        finalAlert = trendAlert;
+      }
+
+      // Trigger urgency notifications if severity is high
+      if (finalAlert.isRisk && finalAlert.severity === 'high' && finalAlert.message) {
+        const user = await VitalsController.userRepository.findOneBy({ id: userId });
+        if (user) {
+          NotificationService.sendUrgencyAlert(user, finalAlert.message).catch(err => 
+            console.error('Error sending urgency alert from vitals log:', err)
+          );
+        }
+      }
 
       return res.status(201).json({ log, alert: finalAlert });
     } catch (error) {
