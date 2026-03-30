@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Activity, HeartPulse, Scale, LineChart as ChartIcon, Table as TableIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { cn } from '../utils/tw';
 import { 
   LineChart, 
   Line, 
@@ -13,7 +14,6 @@ import {
   Area,
   AreaChart
 } from 'recharts';
-
 interface VitalsLog {
   id: string;
   bloodPressure: string | null;
@@ -57,6 +57,23 @@ export default function VitalsHistory() {
       fetalMovement: log.fetalMovement
     };
   });
+
+  const getStatus = (log: VitalsLog) => {
+    let status: 'normal' | 'warning' | 'alert' = 'normal';
+    
+    if (log.bloodPressure) {
+      const systolic = parseInt(log.bloodPressure.split('/')[0], 10);
+      if (systolic >= 140) status = 'alert';
+      else if (systolic >= 130) status = 'warning';
+    }
+    
+    if (log.fetalMovement !== null) {
+      if (log.fetalMovement < 3) status = 'alert';
+      else if (log.fetalMovement < 10 && status !== 'alert') status = 'warning';
+    }
+    
+    return status;
+  };
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -177,9 +194,19 @@ export default function VitalsHistory() {
                       <td className="px-8 py-5 text-center text-maternal-600">{log.weight ? `${log.weight} lbs` : '-'}</td>
                       <td className="px-8 py-5 text-center text-maternal-600">{log.fetalMovement !== null ? `${log.fetalMovement} kicks` : '-'}</td>
                       <td className="px-8 py-5 text-right">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold leading-none bg-green-50 text-green-700 border border-green-100">
-                          Normal
-                        </span>
+                        {(() => {
+                          const status = getStatus(log);
+                          return (
+                            <span className={cn(
+                              "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold leading-none border",
+                              status === 'normal' ? "bg-green-50 text-green-700 border-green-100" :
+                              status === 'warning' ? "bg-amber-50 text-amber-700 border-amber-100" :
+                              "bg-red-50 text-red-700 border-red-100"
+                            )}>
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}
