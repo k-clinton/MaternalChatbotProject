@@ -16,4 +16,9 @@ router.use('/appointments', appointmentRouter);
 router.use('/medications', medicationRouter);
 router.use('/doctors', doctorRouter);
 
+// Add health check under /api/v1/health too
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', source: 'api_router' });
+});
+
 export { router };
