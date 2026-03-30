@@ -47,6 +47,14 @@ export default function Settings() {
 
     try {
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+      
+      // Validation for WhatsApp if enabled
+      if (formData.whatsappNotifications && !formData.whatsappNumber) {
+        setMessage({ type: 'error', text: 'WhatsApp number is required if notifications are enabled.' });
+        setIsSaving(false);
+        return;
+      }
+
       const response = await axios.put(
         `${baseUrl}/users/profile`,
         {
@@ -58,15 +66,15 @@ export default function Settings() {
         }
       );
 
-      // Update local auth context with new user data
-      // Note: Assuming login(data) updates the user object
       if (response.data) {
         updateUser(response.data);
-        setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        setMessage({ type: 'success', text: 'Settings updated successfully!' });
+        // Clear message after 3 seconds
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
       }
     } catch (error) {
       console.error('Update profile error:', error);
-      setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
+      setMessage({ type: 'error', text: 'Failed to update settings. Please try again.' });
     } finally {
       setIsSaving(false);
     }
@@ -79,7 +87,7 @@ export default function Settings() {
         <p className="text-maternal-600 mt-2 text-lg">Manage your health profile and account preferences.</p>
       </header>
       
-      <div className="space-y-8">
+      <form onSubmit={handleUpdateProfile} className="space-y-8">
         {/* Profile Section */}
         <section className="bg-white rounded-3xl shadow-sm border border-maternal-100 overflow-hidden">
           <div className="p-8 border-b border-maternal-50 bg-maternal-50/30 flex items-center gap-3">
@@ -89,7 +97,7 @@ export default function Settings() {
             <h2 className="text-xl font-bold text-maternal-900">Your Profile</h2>
           </div>
           
-          <form onSubmit={handleUpdateProfile} className="p-8 space-y-6">
+          <div className="p-8 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-maternal-700 ml-1">Full Name</label>
@@ -133,24 +141,7 @@ export default function Settings() {
                 />
               </div>
             </div>
-
-            {message.text && (
-              <div className={`p-4 rounded-2xl text-sm font-medium ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-                {message.text}
-              </div>
-            )}
-
-            <div className="flex justify-end pt-2">
-              <button 
-                type="submit"
-                disabled={isSaving}
-                className="bg-maternal-600 hover:bg-maternal-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-2 whitespace-nowrap"
-              >
-                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                Save Changes
-              </button>
-            </div>
-          </form>
+          </div>
         </section>
 
         {/* Notifications Section */}
@@ -219,6 +210,24 @@ export default function Settings() {
           </div>
         </section>
 
+        {message.text && (
+          <div className={`p-4 rounded-2xl text-sm font-medium animate-in fade-in duration-300 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+            {message.text}
+          </div>
+        )}
+
+        <div className="flex justify-center md:justify-end pt-2">
+          <button 
+            type="submit"
+            disabled={isSaving}
+            className="w-full md:w-auto bg-maternal-600 hover:bg-maternal-700 text-white font-bold px-12 py-4 rounded-2xl shadow-lg shadow-maternal-500/20 hover:shadow-maternal-500/40 transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95 disabled:opacity-70"
+          >
+            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            Save All Settings
+          </button>
+        </div>
+      </form>
+
         {/* Account Section */}
         <section className="bg-white rounded-3xl shadow-sm border border-maternal-100 overflow-hidden">
           <div className="p-8 border-b border-maternal-50 bg-maternal-50/30 flex items-center gap-3">
@@ -247,6 +256,5 @@ export default function Settings() {
           </div>
         </section>
       </div>
-    </div>
   );
 }
